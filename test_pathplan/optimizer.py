@@ -16,21 +16,25 @@ class Obstacle:
 class Optimizer:
 
     def __init__(self, X, Y, theta, V, W):
-        self.x = np.zeros(2)
-        self.x[0] = V
-        self.x[1] = W
+        self.depth = 5
+        self.x = np.zeros(2 * self.depth)
         self.X = X
         self.Y = Y
         self.theta = theta
         self.V = V
         self.W = W
         self.obstacles: list[Obstacle] = []
-        self.obsD = 7.0
-        self.alpha = 1.0
-        self.beta = 20.0
+        self.obsD = 4.0
+        self.alpha = 2.0
+        self.beta = 100.0
+        self.gama = 0.5
 
     def heading(self, v, w):
-        return abs(self.V - v) + abs(self.W - w)
+        head = 0
+        for i in range(self.depth):
+            head += abs(self.V - v[i]) + abs(self.W - w[i])
+
+        return head
 
     @staticmethod
     def cal_distance(x1, y1, x2, y2):
@@ -45,12 +49,22 @@ class Optimizer:
 
     def dis(self, v, w):
         global dt
-        X1, Y1, THETA1 = self.cal_next_pos(self.X, self.Y, self.theta, v, w, dt)
         dis = 0
 
-        for obs in self.obstacles:
-            x, y, theta = self.cal_next_pos(obs.x, obs.y, obs.theta, obs.v, obs.w, dt)
-            dis += self.cal_distance(x, y, X1, Y1) ** 2
+        X1 = self.X
+        Y1 = self.Y
+        THETA1 = self.theta
+
+        x = [obs.x for obs in self.obstacles]
+        y = [obs.y for obs in self.obstacles]
+        theta = [obs.theta for obs in self.obstacles]
+
+        for i in range(self.depth):
+            X1, Y1, THETA1 = self.cal_next_pos(X1, Y1, THETA1, v[i], w[i], dt)
+
+            for j, obs in enumerate(self.obstacles):
+                x[j], y[j], theta[j] = self.cal_next_pos(x[j], y[j], theta[j], obs.v, obs.w, dt)
+                dis += self.cal_distance(x[j], y[j], X1, Y1)
 
         return dis
 
@@ -58,12 +72,23 @@ class Optimizer:
         if self.cal_distance(obs.x, obs.y, self.X, self.Y) < self.obsD:
             self.obstacles.append(obs)
 
+    def const_vel(self, v, w):
+        err = 0
+        for i in range(self.depth - 1):
+            err += abs(v[i] - v[i + 1]) + abs(w[i] - w[i + 1])
+
+        return err
+
     def objective(self, x):
-        G = self.alpha * self.heading(x[0], x[1]) - self.beta * self.dis(x[0], x[1])
+        v = [x[i] for i in range(len(x)) if i % 2 == 0]
+        w = [x[i] for i in range(len(x)) if i % 2 != 0]
+        G = self.alpha * self.heading(v, w) - self.beta * self.dis(v, w) + self.gama * self.const_vel(v, w)
         return G
 
     def optimize(self):
-        bnds = ((0.5, 2), (-1, 1))
+        b = ((0.5, 3), (-1, 1))
+        bnds = b * self.depth
         solution = minimize(self.objective, self.x, method='SLSQP', bounds=bnds)
-        print(f"{solution.x[0]:.2f} : {solution.x[1]:.2f}")
+        #print(f"{solution.x[0]:.2f} : {solution.x[1]:.2f}")
+        #print(self.obstacles)
         return solution.x[0], solution.x[1]

@@ -27,4 +27,4 @@ while True:
     plt.draw()
     mybot.allObstacles = obstacles
     mybot.move()
-    plt.pause(0.025)
+    plt.pause(0.01)
