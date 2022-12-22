@@ -16,7 +16,7 @@ class Obstacle:
 class Optimizer:
 
     def __init__(self, X, Y, theta, V, W):
-        self.depth = 5
+        self.depth = 6
         self.x = np.zeros(2 * self.depth)
         self.X = X
         self.Y = Y
@@ -24,8 +24,8 @@ class Optimizer:
         self.V = V
         self.W = W
         self.obstacles: list[Obstacle] = []
-        self.obsD = 4.0
-        self.alpha = 2.0
+        self.obsD = 7.0
+        self.alpha = 5.0
         self.beta = 100.0
         self.gama = 0.5
 
@@ -64,7 +64,7 @@ class Optimizer:
 
             for j, obs in enumerate(self.obstacles):
                 x[j], y[j], theta[j] = self.cal_next_pos(x[j], y[j], theta[j], obs.v, obs.w, dt)
-                dis += self.cal_distance(x[j], y[j], X1, Y1)
+                dis += self.cal_distance(x[j], y[j], X1, Y1)  # ** 2
 
         return dis
 
@@ -86,7 +86,7 @@ class Optimizer:
         return G
 
     def optimize(self):
-        b = ((0.5, 3), (-1, 1))
+        b = ((0.5, 3), (-0.5, 0.5))
         bnds = b * self.depth
         solution = minimize(self.objective, self.x, method='SLSQP', bounds=bnds)
         #print(f"{solution.x[0]:.2f} : {solution.x[1]:.2f}")

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from bot import Bot
 from optimizer import Obstacle
 
-mybot = Bot(25, 25, 0, 0, 0)
+mybot = Bot(25, 25, 0.7, 0, 0)
 source = [60, 75]
 obstacles = [
     Obstacle(40, 35, 0, 0, 0),

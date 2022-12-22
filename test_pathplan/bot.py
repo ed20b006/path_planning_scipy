@@ -30,7 +30,7 @@ class Bot:
         self.y = self.y + self.v * self.dt * np.sin(self.theta)
 
     def control(self):
-        Kp = 0.656
+        Kp = 0.6
         Kd = 0.01
         Ki = 0.0
 
